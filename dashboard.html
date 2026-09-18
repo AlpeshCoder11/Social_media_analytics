@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIH Audience Intelligence Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        h1 { text-align: center; color: #2c3e50; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .full-width { grid-column: span 2; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; color: #555; }
+        .bridge-container { display: flex; justify-content: space-between; gap: 10px; }
+        .bridge-card { background: #e3f2fd; padding: 15px; border-radius: 8px; flex: 1; text-align: center; border: 1px solid #bbdefb; }
+        .bridge-score { font-size: 1.5em; font-weight: bold; color: #1976d2; }
+    </style>
+</head>
+<body>
+
+    <h1>SIH Social Media Analytics</h1>
+
+    <div class="grid">
+        <!-- Highlight Cards for Bridge Accounts -->
+        <div class="card full-width">
+            <h3>🌐 Key Connectors (Highest Betweenness Centrality)</h3>
+            <p style="color: #666; font-size: 0.9em;">These users bridge the gap between isolated echo-chambers.</p>
+            <div class="bridge-container" id="bridges-container">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+
+        <!-- Leaderboard Table -->
+        <div class="card">
+            <h3>🏆 Key Opinion Leaders (PageRank)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Authority Score</th>
+                        <th>Community ID</th>
+                    </tr>
+                </thead>
+                <tbody id="kol-table-body">
+                    <!-- Populated via JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Donut Chart -->
+        <div class="card">
+            <h3>🧩 Echo-Chamber Distribution</h3>
+            <canvas id="communityChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "http://localhost:8000/api/network";
+
+        // Fetch and render Bridge Accounts
+        fetch(`${API_BASE}/bridges`)
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById('bridges-container');
+                data.bridges.forEach(user => {
+                    container.innerHTML += `
+                        <div class="bridge-card">
+                            <strong>${user.user_id}</strong><br>
+                            Score: <span class="bridge-score">${user.betweenness.toFixed(4)}</span><br>
+                            <small>Community: ${user.community_id}</small>
+                        </div>
+                    `;
+                });
+            });
+
+        // Fetch and render KOL Leaderboard
+        fetch(`${API_BASE}/kols`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('kol-table-body');
+                data.kols.forEach(user => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${user.user_id}</strong></td>
+                            <td>${(user.pagerank * 100).toFixed(2)}</td>
+                            <td>Cluster ${user.community_id}</td>
+                        </tr>
+                    `;
+                });
+            });
+
+        // Fetch and render Community Donut Chart
+        fetch(`${API_BASE}/communities`)
+            .then(res => res.json())
+            .then(data => {
+                const labels = data.communities.map(c => `Cluster ${c.community_id}`);
+                const counts = data.communities.map(c => c.user_count);
+
+                new Chart(document.getElementById('communityChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: counts,
+                            backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Security & Credentials (Mandatory)
+.env
+*.session
+*.session-journal
+
+# Python / FastAPI
+__pycache__/
+*.pyc
+venv/
+env/
+.pytest_cache/
+
+# Next.js / Frontend
+node_modules/
+.next/
+out/
+build/
+npm-debug.log
+
+# OS / Editor Files
+.DS_Store
+Thumbs.db
+.vscode/
